@@ -30,6 +30,6 @@ client = Groq(
     api_key=os.environ.get('GROQ_API_KEY')
 )
 
-user_query = "Find all orders placed by customer John Doe."
+user_query = "Qual a variação dos top 5 anúncios do meta ads nos ultimos três meses em %."
 sql_query = generate_sql(client, user_query)
 print(sql_query)
