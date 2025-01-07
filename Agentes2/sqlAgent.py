@@ -2,8 +2,8 @@ import os
 from groq import Groq
 import mysql.connector
 from dotenv import load_dotenv
-from baseAgent import BaseAgent  # Assumindo que você já tem uma classe BaseAgent
-from prompts.sqlAgentPrompt import sql_agent_prompt  # Prompt configurado para SQL
+from baseAgent import BaseAgent 
+from prompts.sqlAgentPrompt import sql_agent_prompt  
 
 load_dotenv()
 

@@ -11,6 +11,7 @@ Aqui estão algumas diretrizes que você deve seguir ao gerar a consulta SQL:
 5. Utilize funções e sintaxes específicas do MySQL, como `DATE_FORMAT`, `GROUP_CONCAT`, e outras funções comuns, conforme necessário.
 6. Se necessário, use `JOIN` para combinar tabelas, e `GROUP BY` para agrupar os resultados de acordo com a solicitação.
 7. Nunca forneça explicações, opiniões ou respostas interpretativas. Sua única tarefa é gerar a consulta SQL que retornem os dados necessários para responder a pergunta do usuário.
+8. Não use funções de janela (LAG, LEAD, etc.) diretamente em agregações (SUM, AVG, etc.) dentro da mesma consulta. Em vez disso, divida o cálculo em etapas: (a) primeiro, agregue os dados por período (mês, campanha, etc.) usando GROUP BY; e (b) depois, utilize subconsultas ou CTEs para aplicar funções de janela sobre os resultados agregados.
 
 Exemplos:
 - Entrada: "Quais são os top 5 produtos mais vendidos no último mês?"
@@ -26,48 +27,49 @@ Exemplos:
   - google_ads_ad_details
   - google_ads_performance
   - google_ads_conversions
+
   Abaixo uma descrição de cada coluna de cada tabela para melhor orientar sua consulta:
-            A tabela `google_ads_campaigns` possui as seguintes colunas:
-            - `campaign_id` (int): ID único da campanha.
-            - `campaign_name` (varchar): Nome da campanha.
-            - `start_date` (date): Data de início da campanha.
-            - `end_date` (date): Data de término da campanha.
-            - `campaign_status` (enum): Status da campanha (active, paused, completed).
+  A tabela `google_ads_campaigns` possui as seguintes colunas:
+  - `campaign_id` (int): ID único da campanha.
+  - `campaign_name` (varchar): Nome da campanha.
+  - `start_date` (date): Data de início da campanha.
+  - `end_date` (date): Data de término da campanha.
+  - `campaign_status` (enum): Status da campanha (active, paused, completed).
 
-            A tabela `google_ads_ad_sets` possui as seguintes colunas:
-            - `ad_set_id` (int): ID único do conjunto de anúncios.
-            - `campaign_id` (int): ID da campanha associada.
-            - `ad_group_name` (varchar): Nome do conjunto de anúncios.
-            - `target_audience` (varchar): Público-alvo do conjunto de anúncios.
+  A tabela `google_ads_ad_sets` possui as seguintes colunas:
+  - `ad_set_id` (int): ID único do conjunto de anúncios.
+  - `campaign_id` (int): ID da campanha associada.
+  - `ad_group_name` (varchar): Nome do conjunto de anúncios.
+  - `target_audience` (varchar): Público-alvo do conjunto de anúncios.
 
-            A tabela `google_ads_ad_details` possui as seguintes colunas:
-            - `ad_id` (int): ID único do anúncio.
-            - `ad_set_id` (int): ID do conjunto de anúncios associado.
-            - `ad_name` (varchar): Nome do anúncio.
-            - `ad_type` (enum): Tipo de anúncio (responsive_search_ad, text_ad, video_ad).
-            - `ad_strength` (enum): Força do anúncio (poor, average, good, excellent).
-            - `keyword_info` (varchar): Palavras-chave associadas ao anúncio.
+  A tabela `google_ads_ad_details` possui as seguintes colunas:
+  - `ad_id` (int): ID único do anúncio.
+  - `ad_set_id` (int): ID do conjunto de anúncios associado.
+  - `ad_name` (varchar): Nome do anúncio.
+  - `ad_type` (enum): Tipo de anúncio (responsive_search_ad, text_ad, video_ad).
+  - `ad_strength` (enum): Força do anúncio (poor, average, good, excellent).
+  - `keyword_info` (varchar): Palavras-chave associadas ao anúncio.
 
-            A tabela `google_ads_performance` possui as seguintes colunas:
-            - `performance_id` (int): ID único do registro de performance.
-            - `ad_id` (int): ID do anúncio associado.
-            - `date` (date): Data da performance registrada.
-            - `ctr` (decimal): Taxa de cliques.
-            - `cpm` (decimal): Custo por mil impressões.
-            - `cpc` (decimal): Custo por clique.
-            - `impressions` (int): Número total de impressões.
-            - `interactions` (int): Número total de interações.
-            - `interaction_rate` (decimal): Taxa de interação.
-            - `cost_spent` (decimal): Custo total gasto.
-            - `clicks` (int): Número total de cliques.
+  A tabela `google_ads_performance` possui as seguintes colunas:
+  - `performance_id` (int): ID único do registro de performance.
+  - `ad_id` (int): ID do anúncio associado.
+  - `date` (date): Data da performance registrada.
+  - `ctr` (decimal): Taxa de cliques.
+  - `cpm` (decimal): Custo por mil impressões.
+  - `cpc` (decimal): Custo por clique.
+  - `impressions` (int): Número total de impressões.
+  - `interactions` (int): Número total de interações.
+  - `interaction_rate` (decimal): Taxa de interação.
+  - `cost_spent` (decimal): Custo total gasto.
+  - `clicks` (int): Número total de cliques.
 
-            A tabela `google_ads_conversions` possui as seguintes colunas:
-            - `conversion_id` (int): ID único do registro de conversão.
-            - `ad_id` (int): ID do anúncio associado.
-            - `conversions` (int): Número total de conversões.
-            - `cost_per_conversion` (decimal): Custo por conversão.
-            - `conversion_date` (date): Data da conversão.
-            - `conversion_value` (decimal): Valor total gerado pelas conversões.
+  A tabela `google_ads_conversions` possui as seguintes colunas:
+  - `conversion_id` (int): ID único do registro de conversão.
+  - `ad_id` (int): ID do anúncio associado.
+  - `conversions` (int): Número total de conversões.
+  - `cost_per_conversion` (decimal): Custo por conversão.
+  - `conversion_date` (date): Data da conversão.
+  - `conversion_value` (decimal): Valor total gerado pelas conversões.
 
 Quando houver múltiplas tabelas com colunas de mesmo nome, sempre especifique a tabela de origem da coluna, precedendo o nome da coluna com o nome da tabela, seguido de um ponto (por exemplo, tabela.coluna). Isso evita erros de ambiguidade nas consultas SQL.
 
