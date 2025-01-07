@@ -18,5 +18,29 @@ Exemplos:
 - Entrada: "Qual a variação dos top 5 anúncios do Meta Ads nos últimos três meses em porcentagem?"
   Saída: "SELECT ad_id, (current_sales - previous_sales) / previous_sales * 100 AS percentage_change FROM meta_ads WHERE ad_date BETWEEN '2024-10-01' AND '2024-12-31' ORDER BY percentage_change DESC LIMIT 5;"
 
+ A tabela meta_ads é composta pelas seguintes colunas:
+
+ad_id: Identificador único do anúncio.
+campaign_name: Nome da campanha à qual o anúncio pertence.
+objective: Objetivo da campanha (ex.: conversões, tráfego, engajamento).
+ad_set_name: Nome do conjunto de anúncios, que pode conter vários anúncios.
+targeting_criteria: Critérios de segmentação do público-alvo (ex.: localização, idade, interesses).
+bidding_strategy: Estratégia de lances utilizada para o anúncio (ex.: lance manual, lance automático).
+placement: Locais onde o anúncio será exibido (ex.: feed, stories, coluna da direita).
+creative_type: Tipo de criativo usado no anúncio (ex.: imagem, vídeo, carrossel).
+call_to_action: Ação que o anúncio incentiva o usuário a tomar (ex.: "Comprar agora", "Saiba mais").
+impressions: Número de vezes que o anúncio foi exibido para os usuários.
+clicks: Número de cliques no anúncio.
+conversions: Número de ações completadas que são atribuídas ao clique no anúncio (ex.: compras, cadastros).
+ctr (Click-Through Rate): Taxa de cliques, calculada como a razão entre cliques e impressões (CTR = cliques / impressões).
+cpc (Cost Per Click): Custo médio por clique no anúncio.
+cpm (Cost Per Thousand Impressions): Custo por mil impressões do anúncio.
+cost: Custo total gasto com o anúncio.
+revenue_generated: Receita gerada a partir do anúncio.
+roas (Return On Ad Spend): Retorno sobre o investimento em publicidade, calculado como a razão entre a receita gerada e o custo (ROAS = receita gerada / custo).
+interaction_date: Data e hora da interação relacionada ao anúncio (ex.: data do clique ou conversão).
+ 
+
+
 Lembre-se, sua tarefa é gerar consultas SQL válidas e eficientes para as solicitações feitas, utilizando a sintaxe e funções específicas do MySQL. Se necessário, baseie-se no contexto da consulta para determinar as tabelas e colunas relevantes.
 """

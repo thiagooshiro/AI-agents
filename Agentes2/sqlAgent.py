@@ -7,7 +7,6 @@ from prompts.sqlAgentPrompt import sql_agent_prompt  # Prompt configurado para S
 
 load_dotenv()
 
-
 class SQLAgent(BaseAgent):
     def __init__(self, api_key, db_config, model="llama3-70b-8192"):
         """
@@ -20,9 +19,30 @@ class SQLAgent(BaseAgent):
         super().__init__(api_key=api_key, client=Groq, model=model)
 
         self.system_content = sql_agent_prompt
-        
         self.db_config = db_config
+
+        # Inicializa as mensagens com uma mensagem do tipo 'system'
         self.messages = [{"role": "system", "content": self.system_content}]
+
+    def initialize_client(self):
+        """
+        Envia o prompt de configuração como primeira mensagem para garantir que o modelo comece configurado.
+        """
+        # Envia a primeira solicitação com o prompt de configuração
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=self.messages
+        )
+
+        # Obtém a resposta do sistema e armazena como memória inicial
+        system_response = response.choices[0].message.content.strip()
+
+        # Verifica se a resposta do sistema é uma string válida
+        if isinstance(system_response, str):
+            print('Initial Response:', system_response)
+            self.store_memory("assistant", system_response)  # Memorizando a resposta inicial do assistente
+        else:
+            print("Erro: resposta do sistema não é uma string válida.")
 
     def generate_sql(self, user_input):
         """
@@ -30,18 +50,32 @@ class SQLAgent(BaseAgent):
         :param user_input: Entrada do usuário em linguagem natural.
         :return: Consulta SQL gerada pelo modelo.
         """
-        # Prepara o histórico de mensagens
+        # Armazena a entrada do usuário no histórico
         self.store_memory("user", user_input)
-        self.messages.append({"role": "user", "content": user_input})
 
+        # Cria a mensagem do usuário
+        self.messages.append({"role": "user", "content": str(user_input)})
+
+        # Envia a solicitação para gerar a consulta SQL
         response = self.client.chat.completions.create(
             model=self.model,
             messages=self.messages
         )
 
-        # Extrai a consulta SQL gerada
-        sql_query = response.choices[0].message.content.strip()
-        return sql_query
+        # Obtém a resposta do assistente (deve ser uma string)
+        assistant_response = response.choices[0].message.content.strip()
+
+        # Verifica se a resposta do assistente é uma string válida
+        if isinstance(assistant_response, str):
+            print("Consulta gerada:", assistant_response)
+        else:
+            assistant_response = "Erro: resposta do assistente não é uma string válida."
+            print(assistant_response)
+
+        # Armazena a resposta do assistente na memória
+        self.store_memory("assistant", assistant_response)
+
+        return assistant_response
 
     def execute_query(self, sql_query):
         """
@@ -66,6 +100,7 @@ class SQLAgent(BaseAgent):
         :param user_input: Entrada do usuário.
         :return: Dicionário com a ação e a resposta.
         """
+        # Gera a consulta SQL com base na entrada do usuário
         sql_query = self.generate_sql(user_input)
         print("Consulta gerada:", sql_query)
 
@@ -77,7 +112,7 @@ class SQLAgent(BaseAgent):
             response = query_results['error']  # Se for erro, não salva na memória
         else:
             response = query_results  # Caso contrário, usa os resultados da consulta
-            self.store_memory("assistant", response)  # Garante que será salvo como string, se não for erro
+            self.store_memory("assistant", str(response))  # Garante que será salvo como string, se não for erro
 
         return {
             "action": "query_result",
@@ -95,6 +130,9 @@ if __name__ == "__main__":
     }
     
     agent = SQLAgent(api_key=os.environ.get('GROQ_API_KEY'), db_config=db_config)
+    
+    # Inicializa o agente com o prompt de configuração
+    agent.initialize_client()
 
     while True:
         user_input = input("Você: ")
