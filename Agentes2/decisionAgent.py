@@ -18,6 +18,10 @@ class DecisionAgent(BaseAgent):
         # Inicializa a classe base
         super().__init__(api_key=api_key, client=Groq, model=model)
 
+        self.system_content = decision_agent_prompt
+        self.messages = [{"role": "system", "content": self.system_content}]
+
+    def decide_action(self, user_input):
         """
         Processa a entrada do usuário e decide qual ação executar, considerando as interações anteriores.
         :param user_input: Entrada do usuário.
