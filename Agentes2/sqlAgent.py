@@ -8,13 +8,6 @@ from prompts.sqlAgentPrompt import sql_agent_prompt  # Prompt configurado para S
 load_dotenv()
 
 
-import os
-import mysql.connector
-from groq import Groq
-from dotenv import load_dotenv
-
-load_dotenv()
-
 class SQLAgent(BaseAgent):
     def __init__(self, api_key, db_config, model="llama3-70b-8192"):
         """
