@@ -1,109 +1,105 @@
 import os
-import sqlite3
 from groq import Groq
+import mysql.connector
 from dotenv import load_dotenv
 from baseAgent import BaseAgent  # Assumindo que você já tem uma classe BaseAgent
 from prompts.sqlAgentPrompt import sql_agent_prompt  # Prompt configurado para SQL
 
 load_dotenv()
 
+
+import os
+import mysql.connector
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
+
 class SQLAgent(BaseAgent):
-    def __init__(self, api_key, db_path=":memory:", model="llama3-70b-8192"):
+    def __init__(self, api_key, db_config, model="llama3-70b-8192"):
         """
         Inicializa o agente com o cliente da API e o modelo LLM, herdando funcionalidades da classe base.
         :param api_key: Chave de API para acessar a LLM.
-        :param db_path: Caminho para o banco de dados. Usamos o SQLite em memória por padrão.
+        :param db_config: Dicionário contendo as configurações de conexão com o MySQL.
         :param model: Modelo LLM a ser usado.
         """
+        # Inicializa a classe base
         super().__init__(api_key=api_key, client=Groq, model=model)
 
-        self.system_content = sql_agent_prompt  # Prompt específico para SQL
-        self.messages = []  # Inicialmente, sem mensagens
-        self.db_path = db_path  # Caminho para o banco de dados
-        self.initialize_client()  # Inicializa o agente com o prompt de configuração
+        self.system_content = sql_agent_prompt
+        
+        self.db_config = db_config
+        self.messages = [{"role": "system", "content": self.system_content}]
 
-    def initialize_client(self):
+    def generate_sql(self, user_input):
         """
-        Envia o prompt de configuração como primeira mensagem para garantir que o modelo comece configurado.
+        Converte a entrada do usuário em uma consulta SQL.
+        :param user_input: Entrada do usuário em linguagem natural.
+        :return: Consulta SQL gerada pelo modelo.
         """
-        self.messages = [{"role": "system", "content": self.system_content}]  # Só o prompt de configuração
+        # Prepara o histórico de mensagens
+        self.store_memory("user", user_input)
+        self.messages.append({"role": "user", "content": user_input})
+
         response = self.client.chat.completions.create(
             model=self.model,
             messages=self.messages
         )
 
-        system_response = response.choices[0].message.content.strip()
-        print('Initial Response:', system_response)
-        self.store_memory("assistant", system_response)  # Memoriza a resposta inicial
-
-    def generate_sql(self, user_input):
-        """
-        Gera uma consulta SQL a partir da entrada do usuário.
-        :param user_input: A consulta em linguagem natural do usuário.
-        :return: A consulta SQL gerada pelo modelo.
-        """
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "system", "content": self.system_content},
-                     {"role": "user", "content": user_input}]
-        )
+        # Extrai a consulta SQL gerada
         sql_query = response.choices[0].message.content.strip()
         return sql_query
 
-    def execute_sql_query(self, sql_query):
+    def execute_query(self, sql_query):
         """
-        Executa a consulta SQL no banco de dados fornecido e retorna os resultados.
-        :param sql_query: A consulta SQL gerada.
-        :return: O resultado da consulta ou uma mensagem de erro.
+        Executa a consulta SQL no banco de dados MySQL.
+        :param sql_query: A consulta SQL gerada pelo modelo.
+        :return: Resultados da consulta.
         """
         try:
-            connection = sqlite3.connect(self.db_path)
-            cursor = connection.cursor()
+            connection = mysql.connector.connect(**self.db_config)
+            cursor = connection.cursor(dictionary=True)
             cursor.execute(sql_query)
-            result = cursor.fetchall()
+            results = cursor.fetchall()
+            cursor.close()
             connection.close()
-            return result
-        except sqlite3.Error as e:
-            return f"Erro ao executar a consulta: {str(e)}"
+            return results
+        except mysql.connector.Error as err:
+            return {"error": f"Erro ao executar a consulta: {err}"}
 
     def decide_action(self, user_input):
         """
-        Processa a entrada do usuário, gera a consulta SQL e executa a consulta no banco de dados.
+        Processa a entrada do usuário e decide qual ação executar, considerando as interações anteriores.
         :param user_input: Entrada do usuário.
-        :return: Dicionário com a ação e os resultados.
+        :return: Dicionário com a ação e a resposta.
         """
-        self.store_memory("user", user_input)  # Armazena a interação do usuário
-
-        # Gera a consulta SQL a partir do input do usuário
         sql_query = self.generate_sql(user_input)
+        print("Consulta gerada:", sql_query)
 
-        # Executa a consulta SQL
-        results = self.execute_sql_query(sql_query)
-
-        # Armazena a resposta na memória
-        self.store_memory("assistant", results)
-
-        # Retorna os resultados ou uma mensagem de erro
+        # Executa a consulta no banco de dados
+        query_results = self.execute_query(sql_query)
+        
+        # Armazena a resposta do assistente e retorna os resultados
+        self.store_memory("assistant", query_results)
+        
         return {
-            "action": "sql_query",
-            "sql_query": sql_query,
-            "results": results
+            "action": "query_result",
+            "response": query_results
         }
 
-# Exemplo de uso
+# Exemplo de uso em um loop contínuo
 if __name__ == "__main__":
-    # Inicializa o agente
-    agent = SQLAgent(api_key=os.environ.get('GROQ_API_KEY'))
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'sua_senha',
+        'database': 'nome_do_banco'
+    }
+    
+    agent = SQLAgent(api_key=os.environ.get('GROQ_API_KEY'), db_config=db_config)
 
-    # Loop contínuo para testar a memória e geração de SQL
     while True:
-        # Entrada do usuário
         user_input = input("Você: ")
-
-        # Decide a ação
         decision = agent.decide_action(user_input)
-        print('Decisão:', decision)
-
-        # Exibe a consulta SQL e os resultados
-        print(f"Consulta SQL: {decision.get('sql_query')}")
-        print(f"Resultados: {decision.get('results')}")
+        print("Ação:", decision["action"])
+        print("Resposta:", decision["response"])
