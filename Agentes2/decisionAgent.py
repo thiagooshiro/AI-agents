@@ -28,11 +28,9 @@ class DecisionAgent(BaseAgent):
         :return: Um dicionário contendo a ação e o texto associado.
         """
 
-        # Prepara o histórico de mensagens, incluindo o conteúdo do sistema e as interações anteriores
+        # Prepara o histórico de mensagens, incluindo a entrada do usuário
         self.store_memory("user", user_input)
-        # Não precisamos mais do extend, já que o histórico de mensagens já foi armazenado
 
-        print('mensagens', self.messages)
         # Envia a solicitação para o modelo
         response = self.client.chat.completions.create(
             model=self.model,
@@ -41,34 +39,30 @@ class DecisionAgent(BaseAgent):
 
         # Obtém o conteúdo gerado pelo sistema
         system_response = response.choices[0].message.content.strip()
-        print('Response', system_response)
-        # Armazena a resposta do sistema na memória
-        self.store_memory("assistant", system_response)
+        print('Response:', system_response)
 
-        # Tenta interpretar a resposta como JSON
         try:
-            # Verifica o tipo de ação e limpa apenas quando necessário
-            if "generic" in system_response.lower():
-                # Limpa a resposta removendo quebras de linha e espaços extras apenas para "generic"
-                cleaned_response = system_response.replace("\n", "")
-            else:
-                # Mantém os espaços para outros casos
-                cleaned_response = system_response
-
             # Tenta carregar a resposta como JSON
-            decision = json.loads(cleaned_response)
-
+            decision = json.loads(system_response)
+            print('Memory', self.messages)
+            # Se for "generic", limpa e guarda a interação simplificada
+            if decision.get('action') == 'generic':
+                cleaned_response = system_response.replace("\n", "")
+                self.store_memory("assistant", decision.get('response'))  # Memoriza apenas a resposta textual
+                return {
+                    "action": "generic",
+                    "response": system_response
+                }
 
             return decision
+
         except json.JSONDecodeError:
-            # Aqui você pode lidar com o erro de forma mais compreensível
+            # Erro ao tentar parsear a resposta como JSON
             return {
                 "action": "error",
                 "input": user_input,
                 "error": f"Failed to parse response as JSON. Raw response: {system_response}"
             }
-
-
 
 # Exemplo de uso em um loop contínuo
 if __name__ == "__main__":
