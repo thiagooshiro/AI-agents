@@ -72,9 +72,13 @@ class SQLAgent(BaseAgent):
         # Executa a consulta no banco de dados
         query_results = self.execute_query(sql_query)
         
-        # Armazena a resposta do assistente e retorna os resultados
-        self.store_memory("assistant", query_results)
-        
+        # Verifica se há erro na resposta
+        if isinstance(query_results, dict) and 'error' in query_results:
+            response = query_results['error']  # Se for erro, não salva na memória
+        else:
+            response = query_results  # Caso contrário, usa os resultados da consulta
+            self.store_memory("assistant", response)  # Garante que será salvo como string, se não for erro
+
         return {
             "action": "query_result",
             "response": query_results
@@ -83,10 +87,11 @@ class SQLAgent(BaseAgent):
 # Exemplo de uso em um loop contínuo
 if __name__ == "__main__":
     db_config = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'sua_senha',
-        'database': 'nome_do_banco'
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'user': os.getenv('DB_USER', 'root'),
+        'password': os.getenv('DB_PASSWORD'),  
+        'database': os.getenv('DB_NAME', 'teste_idfy'),
+        'port': os.getenv('DB_PORT', 3306)
     }
     
     agent = SQLAgent(api_key=os.environ.get('GROQ_API_KEY'), db_config=db_config)
