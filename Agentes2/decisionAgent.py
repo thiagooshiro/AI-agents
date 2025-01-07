@@ -50,7 +50,7 @@ class DecisionAgent(BaseAgent):
             # Verifica o tipo de ação e limpa apenas quando necessário
             if "generic" in system_response.lower():
                 # Limpa a resposta removendo quebras de linha e espaços extras apenas para "generic"
-                cleaned_response = system_response.replace("\n", "").replace(" ", "")
+                cleaned_response = system_response.replace("\n", "")
             else:
                 # Mantém os espaços para outros casos
                 cleaned_response = system_response
@@ -58,12 +58,6 @@ class DecisionAgent(BaseAgent):
             # Tenta carregar a resposta como JSON
             decision = json.loads(cleaned_response)
 
-            # Se a ação for "generic", retorna diretamente a resposta sem o JSON
-            if decision['action'] == 'generic':
-                return {
-                    "action": "generic",
-                    "response": system_response
-                }
 
             return decision
         except json.JSONDecodeError:
