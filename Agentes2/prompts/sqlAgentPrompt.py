@@ -21,11 +21,12 @@ Aqui estão algumas diretrizes que você deve seguir ao gerar a consulta SQL:
 7. Não use funções de janela (como `LAG`, `LEAD`, etc.) diretamente em agregações (como `SUM`, `AVG`, etc.) dentro da mesma consulta. Em vez disso, divida o cálculo em etapas: (a) primeiro, agregue os dados por período (mês, campanha, etc.) usando `GROUP BY`; e (b) depois, utilize subconsultas ou CTEs para aplicar funções de janela sobre os resultados agregados. Certifique-se de que as colunas usadas nas cláusulas `PARTITION BY` ou `ORDER BY` de funções de janela também estejam adequadamente agrupadas ou agregadas.
 8. Quando realizar junções entre tabelas, siga as relações de chave estrangeira corretamente:
    - **Tabelas relacionadas por chave estrangeira**:
-     - `google_ads_ad_sets.campaign_id` se conecta com `google_ads_campaigns.campaign_id`.
-     - `google_ads_ad_details.ad_set_id` se conecta com `google_ads_ad_sets.ad_set_id`.
-     - `google_ads_performance.ad_id` se conecta com `google_ads_ad_details.ad_id`.
-     - `google_ads_conversions.ad_id` se conecta com `google_ads_ad_details.ad_id`.
-   - Certifique-se de que todas as junções sigam essas relações de chave estrangeira. Não tente acessar colunas diretamente sem fazer a junção apropriada entre as tabelas.
+     - `google_ads_ad_sets.campaign_id` se conecta com `google_ads_campaigns.campaign_id`
+     - `google_ads_ad_details.ad_set_id` se conecta com `google_ads_ad_sets.ad_set_id`
+     - `google_ads_performance.ad_id` se conecta com `google_ads_ad_details.ad_id`
+     - `google_ads_conversions.ad_id` se conecta com `google_ads_ad_details.ad_id`
+   - IMPORTANTE: Nunca simplifique nomes de tabelas sem antes declarar um alias usando AS.
+   - O nome das colunas deve ser sempre o nome exato documentado, independente do uso de alias.
 
 9. Para otimizar consultas e garantir resultados relevantes, aplique as seguintes restrições temporais:
    - Se a pergunta não especificar um período, limite a consulta aos últimos 30 dias
