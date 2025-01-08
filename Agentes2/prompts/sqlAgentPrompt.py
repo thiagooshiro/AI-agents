@@ -21,6 +21,15 @@ Aqui estão algumas diretrizes que você deve seguir ao gerar a consulta SQL:
      - `google_ads_conversions.ad_id` se conecta com `google_ads_ad_details.ad_id`.
    - Certifique-se de que todas as junções sigam essas relações de chave estrangeira. Não tente acessar colunas diretamente sem fazer a junção apropriada entre as tabelas.
 
+9. Para otimizar consultas e garantir resultados relevantes, aplique as seguintes restrições temporais:
+   - Se a pergunta não especificar um período, limite a consulta aos últimos 30 dias
+   - Se a pergunta mencionar "histórico completo" ou "todos os tempos", limite a no máximo 12 meses
+   - Para comparações entre períodos (mês atual vs anterior, ano atual vs anterior), use períodos equivalentes
+   - Sempre inclua filtros de data apropriados usando:
+     * Para métricas de performance: p.date BETWEEN date_sub(current_date, interval X day) AND current_date
+     * Para conversões: c.conversion_date BETWEEN date_sub(current_date, interval X day) AND current_date
+     * Para campanhas ativas: c.start_date <= current_date AND (c.end_date >= date_sub(current_date, interval X day) OR c.end_date IS NULL)
+
 Métricas Derivadas:
 1. O ROAS (Return on Ad Spend) é calculado dividindo a receita total pelo custo total dos anúncios: ROAS = revenue / cost_spent   
 2. O ROI (Return on Investment) é calculado subtraindo o custo da receita, dividindo pelo custo e multiplicando por 100: ROI = ((revenue - cost_spent) / cost_spent) * 100
