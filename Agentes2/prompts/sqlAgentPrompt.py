@@ -74,11 +74,11 @@ Exemplos:
 
   Somente existem as tabelas e colunas descritas nas tabelas abaixo, portanto, não tente usar nenhuma que não esteja descrita. Caso uma coluna mencionada na entrada do usuário não exista nas descrições, ignore-a e não a inclua na consulta SQL.
   O serviço do Google Ads é composto pelas seguintes tabelas:
-  - google_ads_campaigns
-  - google_ads_ad_sets
-  - google_ads_ad_details
-  - google_ads_performance
-  - google_ads_conversions
+  - google_ads_campaigns: Armazena informações sobre as campanhas publicitárias, incluindo seus períodos de atividade e status
+  - google_ads_ad_sets: Contém os conjuntos de anúncios (também conhecidos como grupos de anúncios) que pertencem a uma campanha específica
+  - google_ads_ad_details: Mantém os detalhes específicos de cada anúncio individual, incluindo seu tipo e força
+  - google_ads_performance: Registra as métricas diárias de desempenho de cada anúncio, como cliques, impressões e custos
+  - google_ads_conversions: Rastreia as conversões geradas por cada anúncio, incluindo valores e custos associados
 
   Abaixo uma descrição de cada coluna de cada tabela para melhor orientar sua consulta:
   A tabela `google_ads_campaigns` possui as seguintes colunas:
