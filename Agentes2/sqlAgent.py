@@ -98,29 +98,67 @@ class SQLAgent(BaseAgent):
         except mysql.connector.Error as err:
             return {"error": f"Erro ao executar a consulta: {err}"}
 
+    def format_query_results(self, results):
+        """
+        Formata os resultados da query para um formato mais legível e estruturado.
+        :param results: Lista de dicionários com os resultados da query
+        :return: Dicionário formatado com os resultados
+        """
+        if isinstance(results, set) and "ERROR: invalid input" in results:
+            return {"error": "invalid input"}
+            
+        if isinstance(results, dict) and 'error' in results:
+            return results
+
+        formatted_results = {
+            "total_rows": len(results),
+            "columns": list(results[0].keys()) if results else [],
+            "data": results,
+            "summary": {
+                "numeric_columns": {},
+                "categorical_columns": {}
+            }
+        }
+
+        # Se houver resultados, calcula estatísticas básicas
+        if results:
+            for key in results[0].keys():
+                values = [row[key] for row in results]
+                # Verifica se os valores são numéricos
+                if all(isinstance(v, (int, float)) for v in values if v is not None):
+                    formatted_results["summary"]["numeric_columns"][key] = {
+                        "min": min(v for v in values if v is not None),
+                        "max": max(v for v in values if v is not None),
+                        "avg": sum(v for v in values if v is not None) / len([v for v in values if v is not None])
+                    }
+                else:
+                    # Para colunas categóricas, conta as ocorrências únicas
+                    value_counts = {}
+                    for v in values:
+                        if v is not None:
+                            value_counts[str(v)] = value_counts.get(str(v), 0) + 1
+                    formatted_results["summary"]["categorical_columns"][key] = value_counts
+
+        return formatted_results
+
     def decide_action(self, user_input):
         """
-        Processa a entrada do usuário e decide qual ação executar, considerando as interações anteriores.
+        Processa a entrada do usuário e decide qual ação executar.
         :param user_input: Entrada do usuário.
-        :return: Dicionário com a ação e a resposta.
+        :return: Dicionário com a ação e a resposta formatada.
         """
-        # Gera a consulta SQL com base na entrada do usuário
         sql_query = self.generate_sql(user_input)
-        print("Consulta gerada:", sql_query)
-
-        # Executa a consulta no banco de dados
         query_results = self.execute_query(sql_query)
+        formatted_results = self.format_query_results(query_results)
         
-        # Verifica se há erro na resposta
-        if isinstance(query_results, dict) and 'error' in query_results:
-            response = query_results['error']  # Se for erro, não salva na memória
-        else:
-            response = query_results  # Caso contrário, usa os resultados da consulta
-            self.store_memory("assistant", str(response))  # Garante que será salvo como string, se não for erro
+        # Se não for erro, salva na memória
+        if not (isinstance(formatted_results, dict) and 'error' in formatted_results):
+            self.store_memory("assistant", str(formatted_results))
 
         return {
             "action": "query_result",
-            "response": query_results
+            "response": formatted_results,
+            "original_query": sql_query
         }
 
 # Exemplo de uso em um loop contínuo
