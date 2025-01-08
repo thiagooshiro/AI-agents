@@ -83,6 +83,10 @@ class SQLAgent(BaseAgent):
         :param sql_query: A consulta SQL gerada pelo modelo.
         :return: Resultados da consulta.
         """
+        # Se for mensagem de erro, retorna sem executar query
+        if sql_query == "ERROR: invalid input":
+            return {sql_query}
+        
         try:
             connection = mysql.connector.connect(**self.db_config)
             cursor = connection.cursor(dictionary=True)
