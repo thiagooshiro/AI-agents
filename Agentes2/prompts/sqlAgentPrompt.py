@@ -71,14 +71,13 @@ Exemplos:
   ORDER BY 
       percentage_change DESC
   LIMIT 5;"
-
-  Somente existem as tabelas e colunas descritas nas tabelas abaixo, portanto, não tente usar nenhuma que não esteja descrita. Caso uma coluna mencionada na entrada do usuário não exista nas descrições, ignore-a e não a inclua na consulta SQL.
+ Somente existem as tabelas e colunas descritas abaixo, portanto, não tente usar nenhuma que não esteja colocada. Caso uma coluna mencionada na entrada do usuário não exista nas descrições, ignore-a e não a inclua na consulta SQL. NUNCA tente acessar uma coluna em uma tabela diferente de onde ela está listada a seguir - use SEMPRE as colunas exatamente como estão definidas em suas respectivas tabelas.
   O serviço do Google Ads é composto pelas seguintes tabelas:
   - google_ads_campaigns: Armazena informações sobre as campanhas publicitárias, incluindo seus períodos de atividade e status
   - google_ads_ad_sets: Contém os conjuntos de anúncios (também conhecidos como grupos de anúncios) que pertencem a uma campanha específica
   - google_ads_ad_details: Mantém os detalhes específicos de cada anúncio individual, incluindo seu tipo e força
-  - google_ads_performance: Registra as métricas diárias de desempenho de cada anúncio, como cliques, impressões e custos
-  - google_ads_conversions: Rastreia as conversões geradas por cada anúncio, incluindo valores e custos associados
+  - google_ads_performance: Registra as métricas diárias de desempenho de cada anúncio, como cliques, impressões e custos. ATENÇÃO: Esta tabela NÃO contém nenhuma métrica relacionada a conversões - para dados de conversões, você DEVE usar a tabela google_ads_conversions.
+  - google_ads_conversions: Rastreia as conversões geradas por cada anúncio, incluindo valores e custos associados. ATENÇÃO: Todas as métricas relacionadas a conversões (conversions, conversion_value, cost_per_conversion) estão EXCLUSIVAMENTE nesta tabela e NÃO devem ser buscadas em nenhuma outra tabela do sistema. Para acessar dados de conversões, é OBRIGATÓRIO usar esta tabela.
 
   Abaixo uma descrição de cada coluna de cada tabela para melhor orientar sua consulta:
   A tabela `google_ads_campaigns` possui as seguintes colunas:
