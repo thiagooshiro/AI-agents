@@ -70,7 +70,7 @@ Exemplos:
       percentage_change DESC
   LIMIT 5;"
 
-  Somente utilize apenas as tabelas e colunas descritas nas tabelas abaixo. Caso uma coluna mencionada na entrada do usuário não exista nas descrições, ignore-a e não a inclua na consulta SQL.
+  Somente existem as tabelas e colunas descritas nas tabelas abaixo, portanto, não tente usar nenhuma que não esteja descrita. Caso uma coluna mencionada na entrada do usuário não exista nas descrições, ignore-a e não a inclua na consulta SQL.
   O serviço do Google Ads é composto pelas seguintes tabelas:
   - google_ads_campaigns
   - google_ads_ad_sets
