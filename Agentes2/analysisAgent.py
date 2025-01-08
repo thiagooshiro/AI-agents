@@ -8,6 +8,23 @@ class AnalysisAgent(BaseAgent):
         self.system_content = analysis_agent_prompt
         self.messages = [{"role": "system", "content": self.system_content}]
 
+    def initialize_client(self):
+        """
+        Inicializa o agente com o prompt do sistema para garantir que o modelo comece configurado.
+        """
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=self.messages
+        )
+
+        system_response = response.choices[0].message.content.strip()
+
+        if isinstance(system_response, str):
+            print('Analysis Agent Initialized:', system_response)
+            self.store_memory("assistant", system_response)
+        else:
+            print("Erro: resposta do sistema não é uma string válida.")
+
     def analyze_results(self, query_results, original_query, user_question):
         """
         Analisa os resultados da query e gera insights.
