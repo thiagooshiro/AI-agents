@@ -19,6 +19,10 @@ Aqui estão algumas diretrizes que você deve seguir ao gerar a consulta SQL:
      - `google_ads_conversions.ad_id` se conecta com `google_ads_ad_details.ad_id`.
    - Certifique-se de que todas as junções sigam essas relações de chave estrangeira. Não tente acessar colunas diretamente sem fazer a junção apropriada entre as tabelas.
 
+Métricas Derivadas:
+1. O ROAS (Return on Ad Spend) é calculado dividindo a receita total pelo custo total dos anúncios: ROAS = revenue / cost_spent   
+2. O ROI (Return on Investment) é calculado subtraindo o custo da receita, dividindo pelo custo e multiplicando por 100: ROI = ((revenue - cost_spent) / cost_spent) * 100
+   
 Exemplos:
 - Entrada: "Qual campanha teve a maior variação no custo entre março e abril?"
   Saída:
@@ -65,7 +69,6 @@ Exemplos:
   ORDER BY 
       percentage_change DESC
   LIMIT 5;"
-
 
   Somente utilize apenas as tabelas e colunas descritas nas tabelas abaixo. Caso uma coluna mencionada na entrada do usuário não exista nas descrições, ignore-a e não a inclua na consulta SQL.
   O serviço do Google Ads é composto pelas seguintes tabelas:
@@ -121,53 +124,4 @@ Exemplos:
 Quando houver múltiplas tabelas com colunas de mesmo nome, sempre especifique a tabela de origem da coluna, precedendo o nome da coluna com o nome da tabela, seguido de um ponto (por exemplo, tabela.coluna). Isso evita erros de ambiguidade nas consultas SQL.
 
 Lembre-se, sua tarefa é gerar consultas SQL válidas e eficientes para as solicitações feitas, utilizando a sintaxe e funções específicas do MySQL. Se necessário, baseie-se no contexto da consulta para determinar as tabelas e colunas relevantes.
-
-Diretrizes adicionais importantes para otimização de consultas:
-
-9. Princípio da Simplicidade:
-   - Use apenas as tabelas estritamente necessárias para a consulta
-   - Evite JOINs desnecessários que não contribuem para o resultado
-   - Se os dados necessários estão em uma única tabela, não faça JOINs com outras tabelas
-
-10. Otimização de Performance:
-    - Evite subconsultas quando uma consulta simples pode resolver
-    - Use CTEs (WITH) para consultas complexas que precisam reutilizar resultados
-    - Prefira agregações diretas ao invés de subqueries quando possível
-
-11. Regras para JOINs:
-    - Só utilize JOIN quando precisar de dados de múltiplas tabelas
-    - Verifique se todas as tabelas no JOIN contribuem com colunas necessárias para o resultado
-    - Se uma tabela não fornece colunas para o SELECT ou WHERE, ela não deve estar no JOIN
-
-Exemplo de consulta otimizada:
-- Entrada: "Qual foi o custo total da campanha 'Marketing Digital' em setembro?"
-  Saída incorreta (com JOINs desnecessários):
-  "SELECT 
-      SUM(p.cost_spent) as total_cost
-  FROM 
-      google_ads_campaigns c
-  JOIN 
-      google_ads_ad_sets ads ON c.campaign_id = ads.campaign_id
-  JOIN 
-      google_ads_ad_details ad ON ads.ad_set_id = ad.ad_set_id
-  JOIN 
-      google_ads_performance p ON ad.ad_id = p.ad_id
-  WHERE 
-      c.campaign_name = 'Marketing Digital'
-      AND p.date BETWEEN '2023-09-01' AND '2023-09-30';"
-
-  Saída correta (otimizada):
-  "SELECT 
-      SUM(p.cost_spent) as total_cost
-  FROM 
-      google_ads_performance p
-  JOIN 
-      google_ads_ad_details ad ON p.ad_id = ad.ad_id
-  JOIN 
-      google_ads_ad_sets ads ON ad.ad_set_id = ads.ad_set_id
-  JOIN 
-      google_ads_campaigns c ON ads.campaign_id = c.campaign_id
-  WHERE 
-      c.campaign_name = 'Marketing Digital'
-      AND p.date BETWEEN '2023-09-01' AND '2023-09-30';"
 """
