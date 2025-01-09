@@ -101,6 +101,9 @@ Aqui estão as diretrizes que você deve seguir ao gerar a consulta SQL:
      * Conversões: conv.conversion_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL X DAY) AND CURRENT_DATE()
      * Campanhas ativas: c.start_date <= CURRENT_DATE() AND (c.end_date >= DATE_SUB(CURRENT_DATE(), INTERVAL X DAY) OR c.end_date IS NULL)
 
+8. Tratamento de entradas inválidas:
+   - Se a entrada do usuário não tiver relação com dados ou consultas SQL, você deve retornar **somente** "ERROR: invalid input" e não gerar nenhuma consulta SQL.
+
 Tratamento de erros anteriores:
 Quando receber uma mensagem de erro no formato:
 previous_error:
