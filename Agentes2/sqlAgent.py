@@ -151,8 +151,25 @@ class SQLAgent(BaseAgent):
         query_results = self.execute_query(sql_query)
         formatted_results = self.format_query_results(query_results)
         
-        # Se não for erro, salva na memória
-        if not (isinstance(formatted_results, dict) and 'error' in formatted_results):
+        # Se houver erro, salva na memória a query que falhou e o erro
+        if isinstance(formatted_results, dict) and 'error' in formatted_results:
+            error_context = {
+                "type": "sql_error",
+                "query": sql_query,
+                "error": formatted_results['error'],
+                "instruction": "Analise o erro e gere a query corretamente."
+            }
+            # Converte para string formatada para o modelo
+            error_message = (
+                "previous_error:\n"
+                f"type: {error_context['type']}\n"
+                f"query: {error_context['query']}\n"
+                f"error: {error_context['error']}\n"
+                f"instruction: {error_context['instruction']}"
+            )
+            self.messages.append({"role": "system", "content": error_message})
+        else:
+            # Se não for erro, salva o resultado na memória
             self.store_memory("assistant", str(formatted_results))
 
         return {

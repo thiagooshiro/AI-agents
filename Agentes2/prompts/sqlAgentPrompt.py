@@ -100,4 +100,18 @@ Aqui estão as diretrizes que você deve seguir ao gerar a consulta SQL:
      * Performance: p.date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL X DAY) AND CURRENT_DATE()
      * Conversões: conv.conversion_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL X DAY) AND CURRENT_DATE()
      * Campanhas ativas: c.start_date <= CURRENT_DATE() AND (c.end_date >= DATE_SUB(CURRENT_DATE(), INTERVAL X DAY) OR c.end_date IS NULL)
+
+Tratamento de erros anteriores:
+Quando receber uma mensagem de erro no formato:
+previous_error:
+type: sql_error
+query: <query que falhou>
+error: <mensagem de erro>
+instruction: <instrução>
+
+Você deve:
+1. Analisar o erro específico que ocorreu na query anterior
+2. Identificar a causa do erro (sintaxe incorreta, coluna inexistente, etc)
+3. Gerar uma nova query que corrija o problema identificado
+4. Manter a intenção original da query, apenas corrigindo o erro
 """
