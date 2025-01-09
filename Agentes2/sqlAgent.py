@@ -2,181 +2,60 @@ import os
 from groq import Groq
 import mysql.connector
 from dotenv import load_dotenv
-from baseAgent import BaseAgent 
 from prompts.sqlAgentPrompt import sql_agent_prompt  
 
 load_dotenv()
 
-class SQLAgent(BaseAgent):
+class SQLAgent:
     def __init__(self, api_key, db_config, model="llama3-70b-8192"):
-        """
-        Inicializa o agente com o cliente da API e o modelo LLM, herdando funcionalidades da classe base.
-        :param api_key: Chave de API para acessar a LLM.
-        :param db_config: Dicionário contendo as configurações de conexão com o MySQL.
-        :param model: Modelo LLM a ser usado.
-        """
-        # Inicializa a classe base
-        super().__init__(api_key=api_key, client=Groq, model=model)
-
+        self.client = Groq(api_key=api_key)
+        self.model = model
         self.system_content = sql_agent_prompt
         self.db_config = db_config
-
-        # Inicializa as mensagens com uma mensagem do tipo 'system'
-        self.messages = [{"role": "system", "content": self.system_content}]
-
-    def initialize_client(self):
-        """
-        Envia o prompt de configuração como primeira mensagem para garantir que o modelo comece configurado.
-        """
-        # Envia a primeira solicitação com o prompt de configuração
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        # Obtém a resposta do sistema e armazena como memória inicial
-        system_response = response.choices[0].message.content.strip()
-
-        # Verifica se a resposta do sistema é uma string válida
-        if isinstance(system_response, str):
-            print('Initial Response:', system_response)
-            self.store_memory("assistant", system_response)  # Memorizando a resposta inicial do assistente
-        else:
-            print("Erro: resposta do sistema não é uma string válida.")
-
-    def generate_sql(self, user_input):
-        """
-        Converte a entrada do usuário em uma consulta SQL.
-        :param user_input: Entrada do usuário em linguagem natural.
-        :return: Consulta SQL gerada pelo modelo.
-        """
-        # Armazena a entrada do usuário no histórico
-        self.store_memory("user", user_input)
-
-        # Cria a mensagem do usuário
-        self.messages.append({"role": "user", "content": str(user_input)})
-
-        # Envia a solicitação para gerar a consulta SQL
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        # Obtém a resposta do assistente (deve ser uma string)
-        assistant_response = response.choices[0].message.content.strip()
-
-        # Verifica se a resposta do assistente é uma string válida
-        if isinstance(assistant_response, str):
-            print("Consulta gerada:", assistant_response)
-        else:
-            assistant_response = "Erro: resposta do assistente não é uma string válida."
-            print(assistant_response)
-
-        # Armazena a resposta do assistente na memória
-        self.store_memory("assistant", assistant_response)
-
-        return assistant_response
-
-    def execute_query(self, sql_query):
-        """
-        Executa a consulta SQL no banco de dados MySQL.
-        :param sql_query: A consulta SQL gerada pelo modelo.
-        :return: Resultados da consulta.
-        """
-        # Se for mensagem de erro, retorna sem executar query
-        if sql_query == "ERROR: invalid input":
-            return {sql_query}
+    
+    def decide_action(self, user_input):
+        """Processa a entrada do usuário e obtém a query SQL"""
+        messages = [
+            {"role": "system", "content": self.system_content},
+            {"role": "user", "content": user_input}
+        ]
         
         try:
-            connection = mysql.connector.connect(**self.db_config)
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute(sql_query)
-            results = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return results
-        except mysql.connector.Error as err:
-            return {"error": f"Erro ao executar a consulta: {err}"}
-
-    def format_query_results(self, results):
-        """
-        Formata os resultados da query para um formato mais legível e estruturado.
-        :param results: Lista de dicionários com os resultados da query
-        :return: Dicionário formatado com os resultados
-        """
-        if isinstance(results, set) and "ERROR: invalid input" in results:
-            return {"error": "invalid input"}
-            
-        if isinstance(results, dict) and 'error' in results:
-            return results
-
-        formatted_results = {
-            "total_rows": len(results),
-            "columns": list(results[0].keys()) if results else [],
-            "data": results,
-            "summary": {
-                "numeric_columns": {},
-                "categorical_columns": {}
-            }
-        }
-
-        # Se houver resultados, calcula estatísticas básicas
-        if results:
-            for key in results[0].keys():
-                values = [row[key] for row in results]
-                # Verifica se os valores são numéricos
-                if all(isinstance(v, (int, float)) for v in values if v is not None):
-                    formatted_results["summary"]["numeric_columns"][key] = {
-                        "min": min(v for v in values if v is not None),
-                        "max": max(v for v in values if v is not None),
-                        "avg": sum(v for v in values if v is not None) / len([v for v in values if v is not None])
-                    }
-                else:
-                    # Para colunas categóricas, conta as ocorrências únicas
-                    value_counts = {}
-                    for v in values:
-                        if v is not None:
-                            value_counts[str(v)] = value_counts.get(str(v), 0) + 1
-                    formatted_results["summary"]["categorical_columns"][key] = value_counts
-
-        return formatted_results
-
-    def decide_action(self, user_input):
-        """
-        Processa a entrada do usuário e decide qual ação executar.
-        :param user_input: Entrada do usuário.
-        :return: Dicionário com a ação e a resposta formatada.
-        """
-        sql_query = self.generate_sql(user_input)
-        query_results = self.execute_query(sql_query)
-        formatted_results = self.format_query_results(query_results)
-        
-        # Se houver erro, salva na memória a query que falhou e o erro
-        if isinstance(formatted_results, dict) and 'error' in formatted_results:
-            error_context = {
-                "type": "sql_error",
-                "query": sql_query,
-                "error": formatted_results['error'],
-                "instruction": "Analise o erro e gere a query corretamente."
-            }
-            # Converte para string formatada para o modelo
-            error_message = (
-                "previous_error:\n"
-                f"type: {error_context['type']}\n"
-                f"query: {error_context['query']}\n"
-                f"error: {error_context['error']}\n"
-                f"instruction: {error_context['instruction']}"
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages
             )
-            self.messages.append({"role": "system", "content": error_message})
-        else:
-            # Se não for erro, salva o resultado na memória
-            self.store_memory("assistant", str(formatted_results))
-
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            return f"Erro ao gerar query: {str(e)}"
+    
+    def execute_query(self, query):
+        """Executa a query SQL e retorna os resultados"""
+        print('Query: ', query)
+        try:
+            with mysql.connector.connect(**self.db_config) as conn:
+                cursor = conn.cursor(dictionary=True)
+                cursor.execute(query)
+                return cursor.fetchall()
+                
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def format_response(self, query, results):
+        """Formata a resposta final com query e resultados"""
         return {
-            "action": "query_result",
-            "response": formatted_results,
-            "original_query": sql_query
+            "action": "sql_query" if not isinstance(results, dict) or "error" not in results else "error",
+            "original_query": query,
+            "response": results
         }
+    
+    def process_request(self, user_input):
+        """Método principal que coordena o fluxo completo"""
+        query = self.decide_action(user_input)
+        results = self.execute_query(query)
+        return self.format_response(query, results)
 
 # Exemplo de uso em um loop contínuo
 if __name__ == "__main__":
@@ -190,11 +69,8 @@ if __name__ == "__main__":
     
     agent = SQLAgent(api_key=os.environ.get('GROQ_API_KEY'), db_config=db_config)
     
-    # Inicializa o agente com o prompt de configuração
-    agent.initialize_client()
-
     while True:
         user_input = input("Você: ")
-        decision = agent.decide_action(user_input)
+        decision = agent.process_request(user_input)
         print("Ação:", decision["action"])
         print("Resposta:", decision["response"])
