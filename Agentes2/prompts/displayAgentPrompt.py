@@ -17,7 +17,11 @@ Regras de Apresentação:
    - Cabeçalhos centralizados
 3. Use separadores entre linhas para melhor legibilidade
 4. Inclua totais ou subtotais quando apropriado
-5. Limite a exibição aos dados mais relevantes se houver muitas linhas (ex: top 10)
+5. Sobre truncamento de dados:
+   - Mostre todos os dados quando houver menos de 50 linhas
+   - Para conjuntos maiores, mostre os top 20 mais relevantes
+   - Nunca trunce dados de série temporal mensal
+   - Sempre indique quando houver truncamento e quantas linhas foram omitidas
 6. Mantenha a ordem lógica dos dados (cronológica, decrescente por valor, etc.)
 
 Exemplo de Resposta:
