@@ -1,65 +1,65 @@
+import os
 from groq import Groq
-from baseAgent import BaseAgent
+from dotenv import load_dotenv
 from prompts.analysisAgentPrompt import analysis_agent_prompt
 
-class AnalysisAgent(BaseAgent):
+load_dotenv()
+
+class AnalysisAgent:
     def __init__(self, api_key, model="llama3-70b-8192"):
-        super().__init__(api_key=api_key, client=Groq, model=model)
+        """
+        Inicializa o agente com o cliente da API e o modelo LLM.
+        :param api_key: Chave de API para acessar a LLM.
+        :param model: Modelo LLM a ser usado.
+        """
+        self.client = Groq(api_key=api_key)
+        self.model = model
         self.system_content = analysis_agent_prompt
         self.messages = [{"role": "system", "content": self.system_content}]
 
-    def initialize_client(self):
+    def generate_analysis(self, user_input, query_results, original_query):
         """
-        Inicializa o agente com o prompt do sistema para garantir que o modelo comece configurado.
-        """
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        system_response = response.choices[0].message.content.strip()
-
-        if isinstance(system_response, str):
-            print('Analysis Agent Initialized:', system_response)
-            self.store_memory("assistant", system_response)
-        else:
-            print("Erro: resposta do sistema não é uma string válida.")
-
-    def analyze_results(self, query_results, original_query, user_question):
-        """
-        Analisa os resultados da query e gera insights.
-        :param query_results: Resultados formatados da query
+        Gera a análise com base na entrada do usuário e resultados da query.
+        :param user_input: Entrada do usuário em linguagem natural
+        :param query_results: Resultados da query SQL
         :param original_query: Query SQL original
-        :param user_question: Pergunta original do usuário
-        :return: Análise com insights
+        :return: Análise gerada pelo modelo
         """
+        # Reset das mensagens para manter apenas o system prompt
+        self.messages = [{"role": "system", "content": self.system_content}]
+        
+        # Cria o contexto
         context = {
-            "user_question": user_question,
+            "user_question": user_input,
             "sql_query": original_query,
             "query_results": query_results
         }
         
-        analysis_prompt = f"""
+        # Cria a mensagem do usuário
+        message_content = f"""
         Contexto da análise:
         - Pergunta original do usuário: {context['user_question']}
         - Query SQL executada: {context['sql_query']}
         - Resultados obtidos: {context['query_results']}
-
-        Por favor, analise estes dados e forneça insights relevantes.
         """
-
-        self.store_memory("user", analysis_prompt)
-        self.messages.append({"role": "user", "content": analysis_prompt})
+        self.messages.append({"role": "user", "content": message_content})
 
         response = self.client.chat.completions.create(
             model=self.model,
             messages=self.messages
         )
 
-        analysis = response.choices[0].message.content.strip()
-        self.store_memory("assistant", analysis)
-
         return {
             "action": "analysis",
-            "response": analysis
-        } 
+            "response": response.choices[0].message.content.strip()
+        }
+
+    def decide_action(self, user_input, query_results, original_query):
+        """
+        Processa a entrada do usuário e decide qual ação executar.
+        :param user_input: Entrada do usuário
+        :param query_results: Resultados da query SQL
+        :param original_query: Query SQL original
+        :return: Dicionário com a ação e a resposta formatada
+        """
+        return self.generate_analysis(user_input, query_results, original_query)

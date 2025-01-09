@@ -3,30 +3,31 @@ from groq import Groq
 import mysql.connector
 from dotenv import load_dotenv
 from prompts.sqlAgentPrompt import sql_agent_prompt  
+from baseAgent import BaseAgent
 
 load_dotenv()
 
-class SQLAgent:
+class SQLAgent(BaseAgent):
     def __init__(self, api_key, db_config, model="llama3-70b-8192"):
-        self.client = Groq(api_key=api_key)
-        self.model = model
-        self.system_content = sql_agent_prompt
+        super().__init__(api_key, Groq, model, sql_agent_prompt)
         self.db_config = db_config
     
     def decide_action(self, user_input):
         """Processa a entrada do usuário e obtém a query SQL"""
-        messages = [
-            {"role": "system", "content": self.system_content},
-            {"role": "user", "content": user_input}
-        ]
+        # Adiciona a pergunta do usuário à memória
+        self.store_memory("user", user_input)
         
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
-                messages=messages
+                messages=self.messages  # Usando self.messages aqui!
             )
             
-            return response.choices[0].message.content.strip()
+            query = response.choices[0].message.content.strip()
+            # Armazena a query gerada na memória
+            self.store_memory("assistant", query)
+            print("\n🧠 Memória atual: ", self.messages)
+            return query
             
         except Exception as e:
             return f"Erro ao gerar query: {str(e)}"

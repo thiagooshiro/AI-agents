@@ -15,15 +15,13 @@ class BaseAgent:
 
     def store_memory(self, role, content):
         """
-        Armazena uma interação na memória do agente e no histórico de mensagens.
-        :param role: O papel da interação, pode ser 'user' ou 'assistant'.
-        :param content: O conteúdo da interação.
+        Armazena uma interação na memória do agente.
+        Mantém apenas o system prompt + 4 mensagens (2 pares de pergunta/resposta)
         """
-        # Adiciona a nova interação no histórico de mensagens
         self.messages.append({"role": role, "content": content})
-
-        # Limita a memória para as últimas 5 interações
-        if len(self.messages) > 7:  # Contando com o system prompt, o limite será 7 (5 interações + prompt)
-            self.messages.pop(1)  # Remove a interação mais antiga, preservando o system prompt
+        
+        # Se passar de 5 mensagens (system + 2 pares), remove o par mais antigo
+        while len(self.messages) > 5:  # Troca if por while para garantir
+            self.messages.pop(1)  # Sempre remove a partir do índice 1
 
    
