@@ -19,17 +19,26 @@ class DecisionAgent(BaseAgent):
         self.system_content = decision_agent_prompt
         self.messages = [{"role": "system", "content": self.system_content}]
 
-    def decide_action(self, user_input):
+    def decide_action(self, user_input, previous_inputs=None, previous_responses=None):
         """
         Processa a entrada do usuário e decide qual ação executar.
-        :param user_input: Entrada do usuário.
-        :return: Um dicionário contendo a ação e o texto associado.
+        :param user_input: Entrada atual do usuário
+        :param previous_inputs: Lista das últimas entradas do usuário
+        :param previous_responses: Lista das últimas respostas dos agentes (analysis/display)
+        :return: Um dicionário contendo a ação e o texto associado
         """
         # Reset das mensagens para manter apenas o system prompt
         self.messages = [{"role": "system", "content": self.system_content}]
         
-        # Adiciona a interação do usuário
-        self.messages.append({"role": "user", "content": user_input})
+        # Adiciona o histórico à memória se existir
+        if previous_inputs and previous_responses:
+            for i in range(len(previous_inputs)):
+                self.store_memory("user", previous_inputs[i])
+                if i < len(previous_responses):
+                    self.store_memory("assistant", previous_responses[i])
+        
+        # Adiciona a nova pergunta
+        self.store_memory("user", user_input)
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -43,7 +52,9 @@ class DecisionAgent(BaseAgent):
             decision = json.loads(system_response)
             
             if decision.get('action') == 'generic':
-                cleaned_response = system_response.replace("\n", "")
+                cleaned_response = decision.get('response', system_response).replace("\n", "")
+                # Guarda a própria resposta do DecisionAgent na memória
+                self.store_memory("assistant", cleaned_response)
                 return {
                     "action": "generic",
                     "response": cleaned_response
@@ -51,6 +62,7 @@ class DecisionAgent(BaseAgent):
 
             # Caso contrário, retorna a decisão como está
             self.store_memory("assistant", decision.get('response', system_response))
+            print('Memória:', self.messages)
             return decision
             
         except json.JSONDecodeError:

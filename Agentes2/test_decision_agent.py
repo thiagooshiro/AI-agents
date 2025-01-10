@@ -23,6 +23,10 @@ def main():
     analysis_agent = AnalysisAgent(api_key=os.environ.get('GROQ_API_KEY'))
     display_agent = DisplayAgent(api_key=os.environ.get('GROQ_API_KEY'))
     
+    # Histórico de interações
+    previous_inputs = []      # Guarda perguntas do usuário
+    previous_responses = []   # Guarda respostas dos agentes
+    
     print("\n🤖 Testando DecisionAgent... (Digite 'sair' para encerrar)")
     
     while True:
@@ -32,8 +36,16 @@ def main():
             print("👋 Encerrando...")
             break
         
-        # Decide ação com base no input atual
-        decision = decision_agent.decide_action(user_input)
+        # Pega as últimas 2 interações do histórico
+        last_inputs = previous_inputs[-2:] if previous_inputs else None
+        last_responses = previous_responses[-2:] if previous_responses else None
+        
+        # Decide ação com base no histórico
+        decision = decision_agent.decide_action(
+            user_input,
+            last_inputs,
+            last_responses
+        )
         print(f"\n🤔 Ação decidida: {decision['action']}")
         
         # Executa a ação decidida
@@ -52,6 +64,9 @@ def main():
             )
             print("\n📊 Análise:", analysis['response'])
             
+            # Guarda a resposta no histórico
+            previous_responses.append(analysis['response'])
+            
         elif decision['action'] == 'display':
             # Executa a query
             sql_result = sql_agent.process_request(user_input)
@@ -67,8 +82,16 @@ def main():
             )
             print("\n📈 Resultados:", display)
             
+            # Guarda a resposta no histórico
+            previous_responses.append(display)
+            
         elif decision['action'] == 'generic':
             print("\n💬 Resposta:", decision['response'])
+            # Guarda a resposta do DecisionAgent no histórico
+            previous_responses.append(decision['response'])
+        
+        # Guarda a pergunta no histórico
+        previous_inputs.append(user_input)
 
 if __name__ == "__main__":
     main() 
