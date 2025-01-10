@@ -72,7 +72,6 @@ class DecisionAgent(BaseAgent):
                 "error": f"Failed to parse response as JSON. Raw response: {system_response}"
             }
 
-
 if __name__ == "__main__":
     # Inicializa o agente
     agent = DecisionAgent(api_key=os.environ.get('GROQ_API_KEY'))

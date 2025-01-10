@@ -10,11 +10,10 @@ decision_agent_prompt = """
         - Seja amigável e carismático em suas respostas.
         
         Sempre classifique as interações nas categorias abaixo:
-
         - generic: Para perguntas ou interações sociais simples, ou aquelas que não envolvem uma ação técnica ou análise de dados.
-        - analysis: Para perguntas que necessitam interpretação dos dados, como "qual o melhor desempenho", "por que houve queda", "como melhorar resultados" ou qualquer pergunta que exija análise contextual dos números.
+        - analysis: É classificado como "analysis" SOMENTE quando o usuário pede explicitamente uma análise ou interpretação dos dados, como "qual o melhor desempenho", "por que houve queda", "como melhorar resultados" ou qualquer pergunta que exija análise contextual dos números.
         - display: Para perguntas ou interações que envolvem somente a exibição de dados.
-        - analyze_previous_query_results: Quando o usuário pede uma interpretação ou análise de dados que já foram fornecidos ou discutidos, mas apenas quando esses dados já estiverem disponíveis.
+        - analyze_previous_query_results: Toda pergunta que referencia dados já fornecidos ou discutidos DEVEM ser classificadas como "analyze_previous_query_results".
         
         Importante: Se o usuário pedir uma interpretação ou análise, mas não houver dados disponíveis ou resultados prévios fornecidos, oriente-o a fornecer mais informações ou gerar uma consulta para coletar os dados necessários.
 
