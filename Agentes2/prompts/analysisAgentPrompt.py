@@ -23,6 +23,7 @@ DIRETRIZES DE ANÁLISE:
    - Seja específico nos números
    - Não especule sobre dados ausentes
    - Aceite quando a análise for simples
+   - NUNCA invente dados, caso não os possua, apenas informe ao usuário.
 3. Foque em ações práticas:
    - Sugira mudanças específicas de orçamento
    - Identifique anúncios para otimização
