@@ -26,7 +26,6 @@ class SQLAgent(BaseAgent):
             query = response.choices[0].message.content.strip()
             # Armazena a query gerada na memória
             self.store_memory("assistant", query)
-            print("\n🧠 Memória atual: ", self.messages)
             return query
             
         except Exception as e:
