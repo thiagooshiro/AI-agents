@@ -11,76 +11,49 @@ load_dotenv()
 class DecisionAgent(BaseAgent):
     def __init__(self, api_key, model="llama3-70b-8192"):
         """
-        Inicializa o agente com o cliente da API e o modelo LLM, herdando funcionalidades da classe base.
+        Inicializa o agente com o cliente da API e o modelo LLM.
         :param api_key: Chave de API para acessar a LLM.
         :param model: Modelo LLM a ser usado.
         """
-        # Inicializa a classe base
         super().__init__(api_key=api_key, client=Groq, model=model)
-
-        self.system_content = decision_agent_prompt  # Prompt de configuração
-        self.messages = []  # Inicialmente, sem mensagens
-        self.initialize_client()  # Chama a inicialização para enviar o prompt de configuração
-
-    def initialize_client(self):
-        """
-        Envia o prompt de configuração como primeira mensagem para garantir que o modelo comece configurado.
-        """
-        self.messages = [{"role": "system", "content": self.system_content}]  # Só o prompt de configuração
-
-        # Envia a primeira solicitação com o prompt de configuração
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        # Obtém a resposta do sistema e a armazena como memória inicial
-        system_response = response.choices[0].message.content.strip()
-        print('Initial Response:', system_response)  # Verifica a resposta inicial
-
-        self.store_memory("assistant", system_response)  # Memoriza a resposta inicial do assistente
+        self.system_content = decision_agent_prompt
+        self.messages = [{"role": "system", "content": self.system_content}]
 
     def decide_action(self, user_input):
         """
-        Processa a entrada do usuário e decide qual ação executar, considerando as interações anteriores.
+        Processa a entrada do usuário e decide qual ação executar.
         :param user_input: Entrada do usuário.
         :return: Um dicionário contendo a ação e o texto associado.
         """
-        # Adiciona a interação do usuário ao histórico
-        self.store_memory("user", user_input)
+        # Reset das mensagens para manter apenas o system prompt
+        self.messages = [{"role": "system", "content": self.system_content}]
+        
+        # Adiciona a interação do usuário
+        self.messages.append({"role": "user", "content": user_input})
 
-        # Envia a solicitação para o modelo com o histórico de mensagens
         response = self.client.chat.completions.create(
             model=self.model,
             messages=self.messages
         )
 
-        # Obtém a resposta do sistema
         system_response = response.choices[0].message.content.strip()
         print('Response:', system_response)
 
-        # Armazena a resposta do sistema na memória
-        self.store_memory("assistant", system_response)
-
-        # Tenta interpretar a resposta como JSON
         try:
             decision = json.loads(system_response)
-
-            # Se a ação for "generic", limpa e guarda a interação simplificada
+            
             if decision.get('action') == 'generic':
                 cleaned_response = system_response.replace("\n", "")
-                self.store_memory("assistant", cleaned_response)  # Memoriza apenas a resposta textual
                 return {
                     "action": "generic",
-                    "response": system_response
+                    "response": cleaned_response
                 }
 
             # Caso contrário, retorna a decisão como está
             self.store_memory("assistant", decision.get('response', system_response))
             return decision
-
+            
         except json.JSONDecodeError:
-            # Falha ao tentar transformar a resposta da string em JSON
             return {
                 "action": "error",
                 "input": user_input,
