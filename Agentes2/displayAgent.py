@@ -7,24 +7,9 @@ class DisplayAgent(BaseAgent):
         super().__init__(api_key=api_key, client=Groq, model=model)
         self.system_content = display_agent_prompt
         self.messages = [{"role": "system", "content": self.system_content}]
-    
-    def initialize_client(self):
-        """
-        Inicializa o agente com o prompt do sistema.
-        """
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages
-        )
+        # Inicializa a memória com o prompt de configuração
+        self.memory = [self.system_content]  # Armazena apenas o prompt de configuração
 
-        system_response = response.choices[0].message.content.strip()
-
-        if isinstance(system_response, str):
-            print('Display Agent Initialized:', system_response)
-            self.store_memory("assistant", system_response)
-        else:
-            print("Erro: resposta do sistema não é uma string válida.")
-    
     def display_results(self, query_results, original_query, user_question):
         """
         Processa e exibe os resultados da análise de forma amigável.
@@ -40,10 +25,10 @@ class DisplayAgent(BaseAgent):
         Query original: {original_query}
         Pergunta do usuário: {user_question}
         """
-        
-        # Adiciona a mensagem do usuário ao histórico
+
         self.messages.append({"role": "user", "content": message})
         
+        print('Messages: ', self.messages)
         # Obtém a resposta do LLM
         response = self.client.chat.completions.create(
             model=self.model,

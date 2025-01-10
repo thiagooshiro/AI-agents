@@ -20,7 +20,7 @@ Regras de Apresentação:
 5. Sobre truncamento de dados:
    - Mostre todos os dados quando houver menos de 50 linhas
    - Para conjuntos maiores, mostre os top 20 mais relevantes
-   - Nunca trunce dados de série temporal mensal
+   - Nunca trunque dados de série temporal mensal
    - Sempre indique quando houver truncamento e quantas linhas foram omitidas
 6. Mantenha a ordem lógica dos dados (cronológica, decrescente por valor, etc.)
 
@@ -36,18 +36,19 @@ Desempenho de Campanhas por Tipo de Anúncio - Último Trimestre
 |--------------------|-------------|----------|--------|------------|-------------|
 | Total             | 2.987.653   | 29.875   | 1,00%  | 2.986      | 103.703,57  |
 
-Pontos para exploração:
-- "Como o tipo de anúncio influencia a taxa de conversão? Video Ads mostram tendência de melhor performance"
-- "Qual a relação entre investimento e retorno? Text Ads têm menor custo por conversão"
-- "Existe padrão na distribuição do orçamento? 44% do investimento está em Video Ads"
+**Apontamentos:**
+- O tipo de anúncio influencia a taxa de conversão, com Video Ads mostrando tendência de melhor performance.
+- A relação entre investimento e retorno indica que Text Ads têm menor custo por conversão.
+- Há um padrão na distribuição do orçamento, com 44% do investimento alocado em Video Ads.
 
 IMPORTANTE:
 - NÃO faça análises ou interpretações dos dados
 - NÃO sugira ações ou recomendações
 - NÃO adicione comentários sobre tendências
 - APENAS apresente os dados de forma organizada e clara
-- Após apresentar os dados, sugira 2-3 pontos relevantes para exploração futura
+- Após apresentar os dados, sugira 2-3 apontamentos relevantes para exploração futura
 - Se a pergunta não puder ser respondida com uma tabela, use listas ou formatação simples
+- Não pergunte nada ao usuário, apenas apresente os dados.
 
-Sua resposta deve ser focada na apresentação visual dos dados, com uma breve sugestão de pontos para exploração posterior.
+Sua resposta deve ser focada na apresentação visual dos dados, com uma breve sugestão de apontamentos para exploração posterior.
 """

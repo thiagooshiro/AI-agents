@@ -19,12 +19,7 @@ def main():
     sql_agent = SQLAgent(api_key=os.environ.get('GROQ_API_KEY'), db_config=db_config)
     display_agent = DisplayAgent(api_key=os.environ.get('GROQ_API_KEY'))
     
-    # Inicializa os agentes
     print("\n🔄 Inicializando SQL Agent...")
-    sql_agent.initialize_client()
-    
-    print("\n🔄 Inicializando Display Agent...")
-    display_agent.initialize_client()
 
     print("\n🤖 Assistente iniciado! (Digite 'sair' para encerrar)")
     
@@ -37,21 +32,28 @@ def main():
             
         try:
             # Obtém os resultados da query via SQL Agent
-            sql_results = sql_agent.decide_action(user_input)
-            
+            query = sql_agent.decide_action(user_input)  # query agora é uma string
             print("\n📊 Query executada:")
-            print(f"{sql_results['original_query']}")
+            print(f"{query}")  # Exibe a query gerada
             
             # Se houver erro na query, mostra o erro e continua o loop
-            if isinstance(sql_results['response'], dict) and 'error' in sql_results['response']:
-                print(f"❌ Erro: {sql_results['response']['error']}")
+            if isinstance(query, str) and query.startswith("Erro ao gerar query:"):
+                print(f"❌ {query}")
+                continue
+            
+            # Executa a query e obtém os resultados
+            sql_results = sql_agent.execute_query(query)
+            
+            # Se houver erro na execução da query, mostra o erro e continua o loop
+            if isinstance(sql_results, dict) and 'error' in sql_results:
+                print(f"❌ Erro: {sql_results['error']}")
                 continue
             
             # Se tiver resultados válidos, passa para o Display Agent
             print("\n📋 Formatando resultados...")
             display = display_agent.display_results(
-                query_results=sql_results['response'],
-                original_query=sql_results['original_query'],
+                query_results=sql_results,
+                original_query=query,
                 user_question=user_input
             )
             
