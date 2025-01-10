@@ -39,6 +39,8 @@ class DecisionAgent(BaseAgent):
         
         # Adiciona a nova pergunta
         self.store_memory("user", user_input)
+        
+        print("\n📝 Memória atual:", self.messages)  # Debug da memória
 
         response = self.client.chat.completions.create(
             model=self.model,

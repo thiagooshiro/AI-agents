@@ -90,6 +90,10 @@ def main():
             # Guarda a resposta do DecisionAgent no histórico
             previous_responses.append(decision['response'])
         
+        elif decision['action'] == 'analyze_previous_query_results':
+            print("\n⚠️ AnalyzePreviousAgent ainda não foi implementado! 😢")
+            continue
+        
         # Guarda a pergunta no histórico
         previous_inputs.append(user_input)
 
