@@ -37,7 +37,7 @@ def main():
             continue
             
         # Gera a análise dos resultados
-        analysis = analysis_agent.decide_action(
+        analysis = analysis_agent.generate_analysis(
             user_input,
             sql_result['response'],
             sql_result['original_query']

@@ -53,13 +53,3 @@ class AnalysisAgent:
             "action": "analysis",
             "response": response.choices[0].message.content.strip()
         }
-
-    def decide_action(self, user_input, query_results, original_query):
-        """
-        Processa a entrada do usuário e decide qual ação executar.
-        :param user_input: Entrada do usuário
-        :param query_results: Resultados da query SQL
-        :param original_query: Query SQL original
-        :return: Dicionário com a ação e a resposta formatada
-        """
-        return self.generate_analysis(user_input, query_results, original_query)
